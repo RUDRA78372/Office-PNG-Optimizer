@@ -1,2 +1,4 @@
 # Office-PNG-Optimizer
 Optimizes PNG images inside Microsoft Office files using pngquant to reduce size
+
+You will need "The Drag and Drop Component Suite for Delphi" to compile
