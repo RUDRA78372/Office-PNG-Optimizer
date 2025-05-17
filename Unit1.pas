@@ -48,18 +48,31 @@ procedure TForm1.Button1Click(Sender: TObject);
 begin
   if OpenDialog1.Execute then
     if FileExists(OpenDialog1.FileName) then
-      Edit1.Text := (OpenDialog1.FileName)
+    begin
+      Edit1.Text := (OpenDialog1.FileName);
+      Edit2.Text := ChangeFileext(OpenDialog1.FileName, '') + '_optimized' +
+        ExtractFileExt(OpenDialog1.FileName);
+    end
     else
       raise Exception.Create('File does not exist.');
 end;
 
 procedure TForm1.Button2Click(Sender: TObject);
 begin
+  if FileExists(Edit1.Text) then
+  begin
+    SaveDialog1.Initialdir := TPath.GetDirectoryName(Edit1.Text);
+    SaveDialog1.FileName := ChangeFileext(Edit1.Text, '') + '_optimized' +
+      ExtractFileExt(Edit1.Text);
+  end;
   if SaveDialog1.Execute then
     if FileExists(SaveDialog1.FileName) then
       raise Exception.Create('File already exists. Cannot overwrite.')
-    else
-      Edit2.Text := (SaveDialog1.FileName);
+    else if TPath.HasValidPathChars(SaveDialog1.FileName, false) then
+      if (ExtractFileExt(SaveDialog1.FileName) = '') and FileExists(Edit1.Text)
+      then
+        Edit2.Text := SaveDialog1.FileName  +
+          ExtractFileExt(Edit1.Text);
 end;
 
 function ExecPNGQuant(sCommandLine, sWorkDir: string): Boolean;
@@ -175,9 +188,11 @@ begin
     (ExtractFileExt(DropFileTarget1.Files[0]) = '.docm') or
     (ExtractFileExt(DropFileTarget1.Files[0]) = '.xlsm') or
     (ExtractFileExt(DropFileTarget1.Files[0]) = '.pptm') then
+  begin
     Edit1.Text := DropFileTarget1.Files[0];
-  Edit2.Text := ChangeFileext(DropFileTarget1.Files[0], '') + '_optimized' +
-    ExtractFileExt(DropFileTarget1.Files[0]);
+    Edit2.Text := ChangeFileext(DropFileTarget1.Files[0], '') + '_optimized' +
+      ExtractFileExt(DropFileTarget1.Files[0]);
+  end;
   if (Effect = DROPEFFECT_MOVE) then
     Effect := DROPEFFECT_NONE;
 
