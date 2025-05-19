@@ -4,7 +4,7 @@ object Form1: TForm1
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'Office PNG Optimizer'
-  ClientHeight = 180
+  ClientHeight = 199
   ClientWidth = 624
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -18,7 +18,7 @@ object Form1: TForm1
     Left = 0
     Top = 0
     Width = 624
-    Height = 180
+    Height = 199
     Align = alClient
     DragMode = dmAutomatic
     TabOrder = 0
@@ -114,6 +114,26 @@ object Form1: TForm1
       Caption = 'Optimize'
       TabOrder = 5
       OnClick = Button3Click
+    end
+    object CheckBox1: TCheckBox
+      Left = 99
+      Top = 175
+      Width = 161
+      Height = 17
+      Caption = 'Extract Optimized Images'
+      Checked = True
+      State = cbChecked
+      TabOrder = 6
+    end
+    object CheckBox2: TCheckBox
+      Left = 12
+      Top = 175
+      Width = 81
+      Height = 17
+      Caption = 'Overwrite'
+      Checked = True
+      State = cbChecked
+      TabOrder = 7
     end
   end
   object OpenDialog1: TOpenDialog

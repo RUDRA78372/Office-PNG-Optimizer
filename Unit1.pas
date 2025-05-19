@@ -25,6 +25,8 @@ type
     DropFileTarget1: TDropFileTarget;
     Button3: TButton;
     Label5: TLabel;
+    CheckBox1: TCheckBox;
+    CheckBox2: TCheckBox;
     procedure Button1Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure Button2Click(Sender: TObject);
@@ -50,8 +52,11 @@ begin
     if FileExists(OpenDialog1.FileName) then
     begin
       Edit1.Text := (OpenDialog1.FileName);
-      Edit2.Text := ChangeFileext(OpenDialog1.FileName, '') + '_optimized' +
-        ExtractFileExt(OpenDialog1.FileName);
+      if CheckBox2.Checked then
+        Edit2.Text := OpenDialog1.FileName
+      else
+        Edit2.Text := ChangeFileext(OpenDialog1.FileName, '') + '_optimized' +
+          ExtractFileExt(OpenDialog1.FileName);
     end
     else
       raise Exception.Create('File does not exist.');
@@ -65,14 +70,16 @@ begin
     SaveDialog1.FileName := ChangeFileext(Edit1.Text, '') + '_optimized' +
       ExtractFileExt(Edit1.Text);
   end;
-  if SaveDialog1.Execute then
-    if FileExists(SaveDialog1.FileName) then
-      raise Exception.Create('File already exists. Cannot overwrite.')
-    else if TPath.HasValidPathChars(SaveDialog1.FileName, false) then
-      if (ExtractFileExt(SaveDialog1.FileName) = '') and FileExists(Edit1.Text)
-      then
-        Edit2.Text := SaveDialog1.FileName  +
-          ExtractFileExt(Edit1.Text);
+  if not CheckBox2.Checked then
+  begin
+    if SaveDialog1.Execute then
+      if FileExists(SaveDialog1.FileName) then
+        raise Exception.Create('File already exists.')
+  end;
+  if TPath.HasValidPathChars(SaveDialog1.FileName, false) then
+    if (ExtractFileExt(SaveDialog1.FileName) = '') and FileExists(Edit1.Text)
+    then
+      Edit2.Text := SaveDialog1.FileName + ExtractFileExt(Edit1.Text);
 end;
 
 function ExecPNGQuant(sCommandLine, sWorkDir: string): Boolean;
@@ -139,6 +146,11 @@ var
   i: integer;
   PNGS: TStringDynArray;
 begin
+  if not CheckBox2.Checked and TFile.Exists(Edit2.Text) then
+  begin
+    raise Exception.Create('File already exists!');
+    exit;
+  end;
   if (FileExists(Edit1.Text)) and
     (ExtractFileExt(Edit1.Text) = ExtractFileExt(Edit2.Text)) then
   begin
@@ -156,16 +168,32 @@ begin
     if TZipFile.IsValid(Edit1.Text) then
     begin
       TZipFile.ExtractZipFile(Edit1.Text, dir);
-      PNGS := TDirectory.GetFiles(dir1, '*.png');
-      for i := Low(PNGS) to High(PNGS) do
+      if TDirectory.Exists(dir1) then
       begin
-        ExecPNGQuant(Edit3.Text + ' --force "' + PNGS[i] + '" --output "' +
-          PNGS[i] + '"', dir);
-        // showmessage(Edit3.Text + ' --force "' + PNGS[i] + '" --output"' +PNGS[i] + '"');
+        PNGS := TDirectory.GetFiles(dir1, '*.png');
+        for i := Low(PNGS) to High(PNGS) do
+        begin
+          ExecPNGQuant(Edit3.Text + ' --force "' + PNGS[i] + '" --output "' +
+            PNGS[i] + '"', dir);
+          if CheckBox1.Checked then
+          begin
+            // Showmessage(PNGS[i] + Includetrailingbackslash(TPath.GetDirectoryName(Edit2.Text))+ExtractFileName(PNGS[i]));
+            // Showmessage(PNGS[i]);
+            // SHowmessage(TPath.GetDirectoryName(Edit2.Text));
+            TFile.Copy(PNGS[i],
+              IncludeTrailingBackSlash(TPath.GetDirectoryName(Edit2.Text)) +
+              ExtractFileName(PNGS[i]));
+          end;
+          // showmessage(Edit3.Text + ' --force "' + PNGS[i] + '" --output"' +PNGS[i] + '"');
+        end;
       end;
+
       // ExecPNGQuant(Edit3.Text+ ' "'+Edit1.Text+'" --output"'+Edit2.Text+'"',dir);
+      if CheckBox2.Checked then
+        TFile.Delete(Edit2.Text);
+
       TZipFile.ZipDirectoryContents(Edit2.Text, dir);
-      TDirectory.delete(dir, True);
+      TDirectory.Delete(dir, True);
       if TZipFile.IsValid(Edit2.Text) then
         ShowMessage('Optimization/Compression Ok')
       else
@@ -190,8 +218,12 @@ begin
     (ExtractFileExt(DropFileTarget1.Files[0]) = '.pptm') then
   begin
     Edit1.Text := DropFileTarget1.Files[0];
-    Edit2.Text := ChangeFileext(DropFileTarget1.Files[0], '') + '_optimized' +
-      ExtractFileExt(DropFileTarget1.Files[0]);
+    if not CheckBox2.Checked then
+
+      Edit2.Text := ChangeFileext(DropFileTarget1.Files[0], '') + '_optimized' +
+        ExtractFileExt(DropFileTarget1.Files[0])
+    else
+      Edit2.Text := Edit1.Text;
   end;
   if (Effect = DROPEFFECT_MOVE) then
     Effect := DROPEFFECT_NONE;
@@ -203,8 +235,10 @@ begin
   if not FileExists('pngquant.exe') then
   begin
     raise Exception.Create('Cannot find pngquant');
-    Halt(1);
+    Application.Terminate;
   end;
+ // CheckBox1.Checked := false;
+ // CheckBox1.Hide;
   OpenDialog1.Filter := 'Word Documents (*.docm;*.docx)|*.docm;*.docx|' +
     'Excel Spreadsheets (*.xlsm;*.xlsx)|*.xlsm;*.xlsx|' +
     'PowerPoint Presentations (*.pptm;*.pptx)|*.pptm;*.pptx|' +
